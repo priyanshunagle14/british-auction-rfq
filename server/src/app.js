@@ -5,7 +5,7 @@ import supplierRoutes from './routes/supplier.routes.js';
 import { HttpError } from './utils/HttpError.js';
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL || true }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
