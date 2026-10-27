@@ -6,6 +6,8 @@ time back.
 
 Built with React, Node, Express and MongoDB.
 
+Live demo: https://british-auction-rfq-sandy.vercel.app 
+
 ## How the auction works
 
 Each RFQ has these settings:
