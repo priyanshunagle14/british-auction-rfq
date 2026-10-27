@@ -1,0 +1,11 @@
+export const EXTENSION_TRIGGERS = {
+    ANY_BID: 'ANY_BID',
+    ANY_RANK_CHANGE: 'ANY_RANK_CHANGE',
+    L1_CHANGE: 'L1_CHANGE',
+};
+
+export const LOG_TYPES = {
+    BID: 'BID',
+    EXTENSION: 'EXTENSION',
+    FORCE_CLOSE_CAP: 'FORCE_CLOSE_CAP',
+};
