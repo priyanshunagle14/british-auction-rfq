@@ -8,15 +8,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+    res.send('British Auction RFQ API is running. See /api/rfqs');
+});
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/rfqs', rfqRoutes);
 app.use('/api/suppliers', supplierRoutes);
 
-// central error handler: must be last
-app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json({ errors: ['Internal server error'] });
-});
+
+
 
 app.use((err, req, res, next) => {
     if (err instanceof HttpError) {
