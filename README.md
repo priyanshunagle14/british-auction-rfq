@@ -1,104 +1,61 @@
-# British Auction RFQ System
+# British Auction RFQ
 
-An RFQ system where supplier bids near the closing time automatically extend the
-auction, up to a forced-close limit. Built with the MERN stack.
+A small app for running freight quote auctions. A buyer creates an RFQ (request for
+quote), suppliers place bids, and bids made near the closing time push the closing
+time back.
 
-See [docs/HLD.md](docs/HLD.md) for the design, data model and trade-offs.
+Built with React, Node, Express and MongoDB.
 
-## Features
-- Create an RFQ with bid start/close, forced close, pickup date, and auction settings
-  (trigger window X, extension Y, trigger type)
-- Three extension triggers: any bid, any rank change, L1 (lowest bidder) change
-- Extension never passes the forced close time
-- Auction listing with live status, lowest bid and countdown
-- Auction details: ranked bids, full quote breakdown, settings, activity log with
-  the reason for every extension
-- Concurrency-safe bid placement (per-RFQ lock)
-- Unit tests for the extension rules
+## How the auction works
 
-## Tech stack
-React (Vite), Node.js, Express, MongoDB (Mongoose)
+Each RFQ has these settings:
 
-## Setup
+- **X**: the last X minutes before closing
+- **Y**: how many minutes to add
+- **Trigger**: what counts as a reason to extend
+  - any bid
+  - any change in rank
+  - a change in the lowest bidder
 
-Requirements: Node 20+, MongoDB (local or Atlas).
+If a bid comes in during the last X minutes and matches the trigger, the closing time
+moves back by Y minutes. It never goes past the forced close time. Every extension is
+saved in an activity log with the reason.
+
+## Run it
+
+You need Node 20 or newer and MongoDB.
 
 ```bash
-# 1. Backend
 cd server
 npm install
-cp .env.example .env        # then edit MONGO_URI if needed
-npm run seed                # creates 3 sample suppliers
-npm run dev                 # http://localhost:5000
+cp .env.example .env
+npm run seed
+npm run dev
+```
 
-# 2. Frontend (new terminal)
+Open a second terminal:
+
+```bash
 cd client
 npm install
-npm run dev                 # http://localhost:5173
+npm run dev
 ```
 
-`server/.env`:
-```
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/rfq_auction
-```
+The app is at http://localhost:5173 and the API is at http://localhost:5000.
+To run the tests: `npm test` inside `server`.
 
-## Tests
-```bash
-cd server
-npm test
-```
-Covers ranking and tie-breaks, trigger window edges, all three triggers, forced-close
-capping, and closed-auction handling.
+## How I handled a few things
 
-## API
+- A supplier's current bid is their latest bid, and a new bid has to be lower.
+- If two prices are equal, the earlier bid ranks higher.
+- The status (active, closed, force closed) is worked out from the times, so I don't
+  need a job to update it.
+- If two bids arrive at the same moment, they could both read old data. To avoid that,
+  each RFQ is locked for a moment while a bid is being saved.
+- There's no login. You pick the supplier from a dropdown.
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/rfqs` | Create an RFQ |
-| GET | `/api/rfqs` | List RFQs with status, lowest bid, bid count |
-| GET | `/api/rfqs/:id` | Raw RFQ |
-| GET | `/api/rfqs/:id/details` | RFQ, ranking, bid history, activity log |
-| POST | `/api/rfqs/:id/bids` | Place a bid |
-| GET | `/api/suppliers` | List suppliers |
+## What I'd do next
 
-Errors use `{ "errors": ["..."] }` with 400 (validation), 404, 409 (auction closed or
-duplicate reference ID) or 503 (auction busy, retry).
-
-## Trying the three triggers
-1. Create an RFQ closing about 8 minutes from now, forced close about 40 minutes out,
-   X = 10, Y = 5.
-2. **Any bid**: place a bid. The close time moves by 5 minutes and the log says why.
-3. **Any rank change**: place a bid that swaps two suppliers' ranks. A bid that only adds
-   a new supplier at the bottom does not extend.
-4. **L1 change**: a bid that is not the new lowest does not extend. One that takes L1 does.
-5. **Forced close**: create an RFQ with close 2 minutes out and forced close 3 minutes
-   out. After a bid the close time stops at the forced close and the log shows the cap.
-
-Concurrency check: `node server/scripts/concurrency-demo.js <rfqId>` fires bids from all
-suppliers at once; the total extension is exactly (number of bids) x Y.
-
-## Assumptions and decisions
-- A supplier's current bid is its latest; a new bid must be strictly lower.
-- Total = freight + origin charges + destination charges, computed on the server.
-- Ties are ranked by earlier bid.
-- Rank change means an already-ranked supplier moved; a new supplier at the bottom
-  does not count. The first bid counts as an L1 change.
-- Trigger window is `[close - X, close)`. A bid at the close time is rejected.
-- Extension is added to the current close time and capped at the forced close time.
-- Status is derived from time on every read, so no scheduled job is needed.
-- No authentication: the supplier is picked from a dropdown.
-
-## Known limitations
-- Bid, close-time update and log writes are ordered but not wrapped in a transaction.
-- The frontend polls instead of using WebSockets.
-- Listing computes the lowest bid with one aggregate over bids.
-See "Scaling" in the HLD for how each would be addressed.
-
-## Project structure
-```
-server/src   models, routes, controllers, services (auctionEngine, bidService), utils
-server/tests unit tests for the auction engine
-client/src   pages, components, hooks, api layer
-docs         high-level design
-```
+- Add accounts for buyers and suppliers
+- Save a bid and its log entries in one database transaction
+- Use WebSockets instead of refreshing every few seconds
