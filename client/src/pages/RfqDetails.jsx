@@ -73,6 +73,22 @@ export default function RfqDetails() {
                     </div>
 
                     <div className="card">
+                        <h2>All bids, lowest first</h2>
+                        <table>
+                            <thead><tr><th>Supplier</th><th>Total</th><th>Placed at</th></tr></thead>
+                            <tbody>
+                                {[...data.history].sort((a, b) => a.totalPrice - b.totalPrice).map((b) => (
+                                    <tr key={b._id}>
+                                        <td>{b.supplierName}</td>
+                                        <td>{fmtMoney(b.totalPrice)}</td>
+                                        <td>{fmtDateTime(b.createdAt)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="card">
                         <h2>Activity log</h2>
                         {activityLog.length === 0 ? <p className="muted">Nothing yet.</p> : (
                             <ul className="log">

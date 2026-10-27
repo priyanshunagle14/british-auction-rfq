@@ -6,7 +6,9 @@ time back.
 
 Built with React, Node, Express and MongoDB.
 
-Live demo: https://british-auction-rfq-sandy.vercel.app 
+Live demo: https://british-auction-rfq-sandy.vercel.app (the free server sleeps when idle, so the first load can take about 30 seconds)
+
+Design and schema: [docs/HLD.md](docs/HLD.md) (architecture diagram and database schema)
 
 ## How the auction works
 
@@ -23,6 +25,16 @@ If a bid comes in during the last X minutes and matches the trigger, the closing
 moves back by Y minutes. It never goes past the forced close time. Every extension is
 saved in an activity log with the reason.
 
+## Pages
+
+- **Create RFQ**: name and reference ID, start, close and forced close times, pickup
+  date, plus X, Y and the trigger
+- **Auction list**: name and ID, lowest bid, current close time, forced close time, status
+- **Auction details**: ranked bids (L1, L2, ...), quote details, X and Y, and an activity
+  log with the reason for each extension
+- **Quote form** (on the details page): carrier, freight, origin and destination charges,
+  transit time, quote validity
+  
 ## Run it
 
 You need Node 20 or newer and MongoDB.
